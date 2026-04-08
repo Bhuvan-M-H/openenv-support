@@ -1,0 +1,43 @@
+name: support-ticket-env
+version: 1.0
+
+description: Advanced AI environment simulating enterprise customer support operations with multi-agent dynamics, customer profiles, team management, and system complexity.
+
+observation_space:
+  type: structured
+  fields:
+    tickets: list
+    current_ticket: object
+    step_count: int
+    history: list
+    team_members: list
+    system_status: object
+    business_hours: bool
+    pending_callbacks: int
+
+action_space:
+  type: structured
+  actions:
+    - classify
+    - respond
+    - resolve
+    - escalate
+    - transfer
+    - search_kb
+    - schedule_callback
+    - request_supervisor
+
+reward:
+  type: multi-objective
+  range: [0.0, 1.0]
+  description: Composite reward considering immediate resolution, customer satisfaction, team efficiency, and long-term business value
+  components:
+    - immediate_resolution: 0.4
+    - customer_satisfaction: 0.3
+    - team_efficiency: 0.2
+    - long_term_value: 0.1
+
+tasks:
+  - easy
+  - medium
+  - hard

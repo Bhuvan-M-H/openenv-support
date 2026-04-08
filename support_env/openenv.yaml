@@ -1,0 +1,119 @@
+name: support-ticket-env
+version: "1.0.0"
+description: >
+  An RL environment simulating a real-world AI customer-support agent.
+  An agent must triage, classify, respond to, escalate, and resolve
+  support tickets under SLA pressure with sentiment and churn risk dynamics.
+
+author: openenv-hackathon-submission
+
+tags:
+  - openenv
+  - real-world
+  - nlp
+  - customer-support
+  - multi-action
+
+# -- Tasks (easy -> medium -> hard) --
+tasks:
+  - name: easy
+    description: "Resolve as many tickets as possible within 25 steps."
+    grader: grader.grade
+    max_steps: 25
+
+  - name: medium
+    description: "Resolve tickets without breaching SLA deadlines."
+    grader: grader.grade
+    max_steps: 25
+
+  - name: hard
+    description: "Maximize resolution efficiency (resolved / steps taken)."
+    grader: grader.grade
+    max_steps: 25
+
+# -- Reward --
+reward:
+  range: [0.0, 1.0]
+  description: >
+    Per-step reward is a composite of:
+    - classification_accuracy (+0.35 correct / -0.10 wrong)
+    - response_quality       (+0.10 to +0.38 based on empathy, length, urgency)
+    - escalation_fit         (+0.25 for high-urgency / -0.05 for unnecessary)
+    - resolve_success        (+0.70–0.90 depending on SLA)
+    - sla_breach_penalty     (-0.08 per breached ticket per step)
+    - premium_churn_risk     (-0.04 per at-risk premium user)
+
+# -- Action space --
+action_space:
+  type: discrete_structured
+  fields:
+    action_type:
+      type: string
+      enum: [classify, respond, escalate, resolve]
+    ticket_id:
+      type: integer
+      description: ID of the ticket to act on (1-indexed)
+    category:
+      type: string
+      enum: [billing, technical, account]
+      required_for: classify
+    response:
+      type: string
+      description: Free-text customer response
+      required_for: respond
+
+# ── Observation space ──────────────────────────────────────────────────────────
+observation_space:
+  type: structured
+  fields:
+    tickets:
+      type: list[Ticket]
+      description: All 8 tickets in the episode
+    current_ticket:
+      type: Ticket
+      description: The highest-priority unresolved ticket
+    step_count:
+      type: integer
+    history:
+      type: list[string]
+      description: Log of previous actions and rewards
+
+# ── Ticket schema ──────────────────────────────────────────────────────────────
+schemas:
+  Ticket:
+    id: integer
+    text: string
+    user_type:
+      type: string
+      enum: [free, premium]
+    priority:
+      type: string
+      enum: [low, medium, high]
+    sentiment:
+      type: string
+      enum: [angry, neutral, happy]
+    urgency:
+      type: integer
+      range: [1, 10]
+    sla_deadline:
+      type: integer
+      description: Steps remaining before SLA breach
+    category:
+      type: string
+      nullable: true
+    response:
+      type: string
+      nullable: true
+    resolved:
+      type: boolean
+
+# ── Server ─────────────────────────────────────────────────────────────────────
+server:
+  port: 8000
+  endpoints:
+    reset:  POST /reset
+    step:   POST /step
+    state:  GET  /state
+    health: GET  /health
+    docs:   GET  /docs
+    web:    GET  /web
