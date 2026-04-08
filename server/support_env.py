@@ -238,23 +238,23 @@ class SupportEnv:
 
     def _classify_score(self, ticket: Ticket, action: Action, breakdown: Dict[str, float]) -> float:
         if not action.category:
-            breakdown["classification_missing"] = -0.1
-            return -0.1
+            breakdown["classification_missing"] = -0.099
+            return -0.099
         expected = self._expected_category(ticket.text)
         if action.category == expected:
             breakdown["classification_accuracy"] = 0.35
             return 0.35
-        breakdown["classification_accuracy"] = -0.1
-        return -0.1
+        breakdown["classification_accuracy"] = -0.099
+        return -0.099
 
     def _response_score(self, ticket: Ticket, action: Action, breakdown: Dict[str, float]) -> float:
         if not action.response:
-            breakdown["response_missing"] = -0.15
-            return -0.15
+            breakdown["response_missing"] = -0.149
+            return -0.149
         response = action.response.lower()
         length_bonus = 0.1 if len(response) > 30 else 0.03
-        empathy_bonus = 0.1 if any(w in response for w in ("sorry", "understand", "prioritizing")) else 0.0
-        urgency_bonus = 0.08 if ticket.urgency > 7 and "priorit" in response else 0.0
+        empathy_bonus = 0.1 if any(w in response for w in ("sorry", "understand", "prioritizing")) else 0.001
+        urgency_bonus = 0.08 if ticket.urgency > 7 and "priorit" in response else 0.001
         total = 0.1 + length_bonus + empathy_bonus + urgency_bonus
         breakdown["response_quality"] = total
         return total
@@ -270,10 +270,10 @@ class SupportEnv:
     def step(self, action: Action) -> Tuple[Observation, Reward, bool, Dict]:
         self.step_count += 1
         breakdown: Dict[str, float] = {}
-        score = 0.0
-        customer_satisfaction_impact = 0.0
-        team_efficiency_impact = 0.0
-        long_term_value_impact = 0.0
+        score = 0.001
+        customer_satisfaction_impact = 0.001
+        team_efficiency_impact = 0.001
+        long_term_value_impact = 0.001
         info: Dict[str, Any] = {}
 
         ticket = next((t for t in self.tickets if t.id == action.ticket_id), None)
@@ -446,12 +446,12 @@ class SupportEnv:
 
                 if self.random.random() < success_chance:
                     ticket.resolved = True
-                    resolve_reward = 0.7 + (0.2 if ticket.sla_deadline > 0 else 0.0)
+                    resolve_reward = 0.7 + (0.2 if ticket.sla_deadline > 0 else 0.001)
 
                     # Customer satisfaction bonus for good resolution
                     if ticket.customer_profile and ticket.customer_profile.satisfaction_history:
                         avg_satisfaction = sum(ticket.customer_profile.satisfaction_history) / len(ticket.customer_profile.satisfaction_history)
-                        satisfaction_bonus = 0.1 if avg_satisfaction > 0.7 else 0.0
+                        satisfaction_bonus = 0.1 if avg_satisfaction > 0.7 else 0.001
                         resolve_reward += satisfaction_bonus
                         customer_satisfaction_impact += satisfaction_bonus
 
@@ -505,8 +505,8 @@ class SupportEnv:
         # Enhanced history logging
         self.history.append(
             f"step={self.step_count} action={action.action_type} ticket={action.ticket_id} "
-            f"score={score:.2f} satisfaction={customer_satisfaction_impact:.2f} "
-            f"efficiency={team_efficiency_impact:.2f} value={long_term_value_impact:.2f} "
+            f"score={score:.3f} satisfaction={customer_satisfaction_impact:.3f} "
+            f"efficiency={team_efficiency_impact:.3f} value={long_term_value_impact:.3f} "
             f"details={breakdown}"
         )
 

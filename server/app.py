@@ -99,9 +99,9 @@ def step(action: Action):
         observation=obs,
         reward=reward.score,
         reward_breakdown=reward.breakdown,
-        customer_satisfaction_impact=getattr(reward, 'customer_satisfaction_impact', 0.0),
-        team_efficiency_impact=getattr(reward, 'team_efficiency_impact', 0.0),
-        long_term_value_impact=getattr(reward, 'long_term_value_impact', 0.0),
+        customer_satisfaction_impact=getattr(reward, 'customer_satisfaction_impact', 0.001),
+        team_efficiency_impact=getattr(reward, 'team_efficiency_impact', 0.001),
+        long_term_value_impact=getattr(reward, 'long_term_value_impact', 0.001),
         done=done,
         info=info,
     )

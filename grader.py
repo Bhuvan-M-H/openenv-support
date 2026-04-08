@@ -46,9 +46,9 @@ def grade(task: str, history: List[str], tickets: list) -> float:
             except (ValueError, IndexError):
                 continue
 
-    avg_customer_satisfaction = sum(customer_satisfaction_impacts) / len(customer_satisfaction_impacts) if customer_satisfaction_impacts else 0.0
-    avg_team_efficiency = sum(team_efficiency_impacts) / len(team_efficiency_impacts) if team_efficiency_impacts else 0.0
-    avg_long_term_value = sum(long_term_value_impacts) / len(long_term_value_impacts) if long_term_value_impacts else 0.0
+    avg_customer_satisfaction = sum(customer_satisfaction_impacts) / len(customer_satisfaction_impacts) if customer_satisfaction_impacts else 0.001
+    avg_team_efficiency = sum(team_efficiency_impacts) / len(team_efficiency_impacts) if team_efficiency_impacts else 0.001
+    avg_long_term_value = sum(long_term_value_impacts) / len(long_term_value_impacts) if long_term_value_impacts else 0.001
 
     if task == "easy":
         # Focus on basic resolution with some customer satisfaction

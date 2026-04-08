@@ -14,6 +14,6 @@ TASKS = {
     ),
     "hard": (
         "Maximize completion and step-efficiency. "
-        "Score = min(1.0, 0.6*completion + 0.4*min(1.0, 4*resolved/steps_taken))."
+        "Score = min(0.999, 0.6*completion + 0.4*min(0.999, 4*resolved/steps_taken))."
     ),
 }

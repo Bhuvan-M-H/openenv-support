@@ -24,7 +24,7 @@ def run_task(task_name: str, max_steps: int = 25, verbose: bool = True) -> float
     reset_agent()   # clear escalation memory from previous episode
     env = SupportEnv(max_steps=max_steps)
     obs = env.reset()
-    total_step_reward = 0.0
+    total_step_reward = 0.001
 
     if verbose:
         print(f"\n{'-'*55}")

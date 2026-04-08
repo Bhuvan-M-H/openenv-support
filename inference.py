@@ -210,7 +210,7 @@ def _guess_category(text: str) -> str:
 
 
 def _did_resolve_fail(obs, ticket_id: int) -> bool:
-    needle = f"action=resolve ticket={ticket_id} score=0.00"
+    needle = f"action=resolve ticket={ticket_id} score=0.001"
     return any(needle in line for line in obs.history[-6:])
 
 
@@ -338,7 +338,7 @@ async def run_task(task_name: str) -> None:
     history: List[float] = []
     rewards: List[float] = []
     steps_taken = 0
-    score = 0.0
+    score = 0.001
     success = False
     last_error = None
 
@@ -378,7 +378,7 @@ async def run_task(task_name: str) -> None:
     except Exception as e:
         last_error = str(e)
         # Log final error step
-        log_step(step=steps_taken + 1, action="error", reward=0.0, done=True, error=last_error)
+        log_step(step=steps_taken + 1, action="error", reward=0.001, done=True, error=last_error)
     
     finally:
         # Ensure environment is closed
