@@ -32,9 +32,9 @@ Deployed on Hugging Face Spaces with an interactive web UI at `/web` and full AP
 | Property | Value |
 |----------|-------|
 | **Domain** | Customer support automation |
-| **Action space** | 4 discrete actions: `classify`, `respond`, `escalate`, `resolve` |
-| **Observation space** | 6 support tickets with metadata |
-| **Reward range** | `[0.0, 1.0]` per step |
+| **Action space** | 8 discrete actions: `classify`, `respond`, `escalate`, `resolve`, `transfer`, `search_kb`, `schedule_callback`, `request_supervisor` |
+| **Observation space** | 8 support tickets with metadata |
+| **Reward range** | `(0.0, 1.0)` per step |
 | **Max steps** | 25 |
 | **Tasks** | 3 (easy -> medium -> hard) |
 
@@ -43,7 +43,8 @@ Deployed on Hugging Face Spaces with an interactive web UI at `/web` and full AP
 - **Sequential dependencies**: A ticket must be classified -> responded to -> (optionally escalated) -> resolved, in order. Skipping steps reduces resolution probability.  
 - **SLA pressure**: Each step, all unresolved tickets lose 1 SLA unit. Breach -> sentiment worsens -> churn risk rises.  
 - **Stochastic resolution**: Resolution success probability depends on urgency, escalation history, and ticket context.  
-- **Competing priorities**: The agent must juggle 8 tickets simultaneously, choosing which to handle each step.
+- **Multi-objective optimization**: Balance resolution rates, customer satisfaction, team efficiency, and long-term value.  
+- **Complex action space**: 8 different actions with varying effects and requirements.
 
 ---
 
@@ -51,18 +52,22 @@ Deployed on Hugging Face Spaces with an interactive web UI at `/web` and full AP
 
 ```python
 class Action(BaseModel):
-    action_type: Literal["classify", "respond", "escalate", "resolve"]
+    action_type: Literal["classify", "respond", "resolve", "escalate", "transfer", "search_kb", "schedule_callback", "request_supervisor"]
     ticket_id:   int             # Which ticket to act on
-    category:    Optional[str]   # "billing" | "technical" | "account"  (for classify)
+    category:    Optional[str]   # "billing" | "technical" | "account" | "enterprise"  (for classify)
     response:    Optional[str]   # Free-text response  (for respond)
 ```
 
 | Action | Effect |
 |--------|--------|
-| `classify` | Labels the ticket as billing / technical / account. +0.35 if correct, -0.10 if wrong. |
+| `classify` | Labels the ticket as billing / technical / account / enterprise. +0.35 if correct, -0.10 if wrong. |
 | `respond` | Writes a customer-facing reply. Reward based on empathy, length, urgency. |
 | `escalate` | Passes to specialist team. +0.25 for urgent/high-priority, +0.05 otherwise. |
 | `resolve` | Closes the ticket. Success probability depends on context, urgency & escalation. |
+| `transfer` | Transfers the ticket to a specific agent. Reward based on agent expertise match. |
+| `search_kb` | Searches knowledge base for relevant information. Provides context for response. |
+| `schedule_callback` | Schedules a callback for the customer. Useful for complex issues. |
+| `request_supervisor` | Requests supervisor intervention. For critical or unresolved cases. |
 
 ---
 
@@ -76,7 +81,7 @@ class Observation(BaseModel):
     history:        List[str]      # Step-by-step action log
 ```
 
-Each `Ticket` has: `id`, `text`, `user_type` (free/premium), `priority` (low/medium/high), `sentiment` (angry/neutral/happy), `urgency` (1-10), `sla_deadline`, `category`, `response`, `resolved`.
+Each `Ticket` has: `id`, `text`, `user_type` (free/premium/enterprise), `priority` (low/medium/high/urgent), `sentiment` (angry/neutral/happy/frustrated/delight), `urgency` (1-10), `sla_deadline`, `category`, `subcategory`, `response`, `resolved`.
 
 ---
 
@@ -94,7 +99,7 @@ The per-step reward is a **weighted composite**:
 | `sla_breach_penalty` | -0.08 x breaches | Each step |
 | `premium_churn_risk` | -0.04 x at-risk | Each step |
 
-All rewards clamped to `[0.0, 1.0]`.
+All rewards clamped to `(0.0, 1.0)`.
 
 ---
 
@@ -102,9 +107,9 @@ All rewards clamped to `[0.0, 1.0]`.
 
 | Task | Goal | Grader Formula |
 |------|------|----------------|
-| **easy** | Resolve as many tickets as possible | `resolved / total` |
-| **medium** | Resolve while minimizing active SLA risk | `0.8*(resolved/total) + 0.2*(1 - open_sla_breached/total)` |
-| **hard** | Balance completion and efficiency | `min(1.0, 0.6*completion + 0.4*min(1.0, 4*resolved/steps))` |
+| **easy** | Resolve as many tickets as possible with customer satisfaction | `min(0.8, resolved/total) + satisfaction_bonus` |
+| **medium** | Balance resolution, SLA compliance, and team efficiency | `0.4*(resolved/total) + 0.3*SLA_score + 0.3*efficiency_score` |
+| **hard** | Multi-objective: resolution, efficiency, satisfaction, value | `0.3*weighted_resolution + 0.2*efficiency + 0.25*satisfaction + 0.25*value` |
 
 ---
 
@@ -248,7 +253,7 @@ curl http://localhost:8000/state
 Run the local pre-submission check:
 
 ```bash
-# Verify all 3 tasks produce scores in [0.0, 1.0]
+# Verify all 3 tasks produce scores in (0.0, 1.0)
 python run_task.py
 
 # Verify inference.py runs without errors
@@ -278,7 +283,7 @@ To improve shortlist competitiveness, we ran one focused shaping pass on scoring
 | After medium/hard task shaping | 1.00 | 1.00 | 1.00 | 1.00 |
 
 Notes:
-- Scores remain bounded in `[0.0, 1.0]`.
+- Scores remain bounded in `(0.0, 1.0)`.
 - This shaping improves evaluation stability while keeping realistic trade-offs (SLA risk vs throughput vs efficiency).
 
 ---

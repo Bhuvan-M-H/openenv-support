@@ -1,7 +1,7 @@
 """
 grader.py — Per-task scoring functions for the Support Ticket RL Environment.
 
-All functions return a float in [0.0, 1.0].
+All functions return a float in (0.0, 1.0).
 Called by both run_task.py (local validation) and inference.py (submission).
 """
 
@@ -18,11 +18,11 @@ def grade(task: str, history: List[str], tickets: list) -> float:
         tickets:  List of Ticket objects at end of episode
 
     Returns:
-        Float score in [0.0, 1.0]
+        Float score in (0.0, 1.0)
     """
     total = len(tickets)
     if total == 0:
-        return 0.0
+        return 0.001
 
     resolved = [t for t in tickets if t.resolved]
     n_resolved = len(resolved)
@@ -52,9 +52,9 @@ def grade(task: str, history: List[str], tickets: list) -> float:
 
     if task == "easy":
         # Focus on basic resolution with some customer satisfaction
-        resolution_score = n_resolved / total
+        resolution_score = min(0.8, n_resolved / total)
         satisfaction_bonus = min(0.2, avg_customer_satisfaction * 0.5)
-        return round(resolution_score + satisfaction_bonus, 4)
+        score = resolution_score + satisfaction_bonus
 
     elif task == "medium":
         # Balance resolution, SLA compliance, and team efficiency
@@ -65,7 +65,7 @@ def grade(task: str, history: List[str], tickets: list) -> float:
 
         efficiency_score = 0.3 * min(1.0, avg_team_efficiency + 0.5)  # Baseline 0.5
 
-        return round(resolution_score + sla_score + efficiency_score, 4)
+        score = resolution_score + sla_score + efficiency_score
 
     elif task == "hard":
         # Multi-objective optimization with complexity weighting
@@ -90,7 +90,16 @@ def grade(task: str, history: List[str], tickets: list) -> float:
         satisfaction_score = 0.25 * min(1.0, avg_customer_satisfaction + 0.5)
         value_score = 0.25 * min(1.0, avg_long_term_value + 0.5)
 
-        return round(resolution_score + efficiency_score + satisfaction_score + value_score, 4)
+        score = resolution_score + efficiency_score + satisfaction_score + value_score
 
     else:
         raise ValueError(f"Unknown task: '{task}'. Must be one of: easy, medium, hard")
+
+    # Ensure score is strictly between 0 and 1
+    score = round(score, 4)
+    if score <= 0.0:
+        score = 0.001
+    elif score >= 1.0:
+        score = 0.999
+
+    return score
