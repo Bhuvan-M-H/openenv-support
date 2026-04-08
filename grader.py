@@ -52,18 +52,18 @@ def grade(task: str, history: List[str], tickets: list) -> float:
 
     if task == "easy":
         # Focus on basic resolution with some customer satisfaction
-        resolution_score = min(0.8, n_resolved / total)
-        satisfaction_bonus = min(0.2, avg_customer_satisfaction * 0.5)
+        resolution_score = max(0.001, min(0.798, n_resolved / total))  # Ensure > 0 and < 0.8
+        satisfaction_bonus = max(0.001, min(0.198, avg_customer_satisfaction * 0.5))  # Ensure > 0 and < 0.2
         score = resolution_score + satisfaction_bonus
 
     elif task == "medium":
         # Balance resolution, SLA compliance, and team efficiency
-        resolution_score = 0.4 * (n_resolved / total)
+        resolution_score = max(0.001, 0.4 * (n_resolved / total))
 
         sla_breached_open = sum(1 for t in tickets if (not t.resolved) and t.sla_deadline <= 0)
-        sla_score = 0.3 * max(0.0, 1.0 - (sla_breached_open / total))
+        sla_score = max(0.001, 0.3 * max(0.001, 1.0 - (sla_breached_open / total)))
 
-        efficiency_score = 0.3 * min(1.0, avg_team_efficiency + 0.5)  # Baseline 0.5
+        efficiency_score = max(0.001, 0.3 * min(0.998, avg_team_efficiency + 0.5))  # Ensure < 1.0
 
         score = resolution_score + sla_score + efficiency_score
 
@@ -81,14 +81,14 @@ def grade(task: str, history: List[str], tickets: list) -> float:
             complexity_weights.get(t.resolution_complexity or "simple", 1.0)
             for t in tickets
         )
-        resolution_score = 0.3 * (weighted_resolutions / total_weighted_complexity if total_weighted_complexity > 0 else 0)
+        resolution_score = max(0.001, 0.3 * (weighted_resolutions / total_weighted_complexity if total_weighted_complexity > 0 else 0.001))
 
         # Efficiency considering complexity
-        efficiency_score = 0.2 * min(1.0, (n_resolved / steps_taken) * 2.0)
+        efficiency_score = max(0.001, 0.2 * min(0.998, (n_resolved / steps_taken) * 2.0))
 
         # Customer satisfaction and long-term value
-        satisfaction_score = 0.25 * min(1.0, avg_customer_satisfaction + 0.5)
-        value_score = 0.25 * min(1.0, avg_long_term_value + 0.5)
+        satisfaction_score = max(0.001, 0.25 * min(0.998, avg_customer_satisfaction + 0.5))
+        value_score = max(0.001, 0.25 * min(0.998, avg_long_term_value + 0.5))
 
         score = resolution_score + efficiency_score + satisfaction_score + value_score
 
@@ -100,6 +100,10 @@ def grade(task: str, history: List[str], tickets: list) -> float:
     if score <= 0.0:
         score = 0.001
     elif score >= 1.0:
+        score = 0.999
+    elif score == 0.0:
+        score = 0.001
+    elif score == 1.0:
         score = 0.999
 
     return score

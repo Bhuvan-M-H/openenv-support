@@ -221,7 +221,7 @@ class SupportEnv:
 
     @staticmethod
     def _clamp(score: float) -> float:
-        return max(0.0, min(1.0, score))
+        return max(0.001, min(0.999, score))
 
     def _degrade_sla(self) -> int:
         breached = 0

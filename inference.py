@@ -372,7 +372,7 @@ async def run_task(task_name: str) -> None:
 
         # Calculate final score using grader
         final_score = grade(task_name, env.history, env.tickets)
-        score = min(max(final_score, 0.0), 1.0)  # clamp to [0, 1]
+        score = min(max(final_score, 0.001), 0.999)  # clamp to (0, 1)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     except Exception as e:
