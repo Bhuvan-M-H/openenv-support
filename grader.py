@@ -97,13 +97,10 @@ def grade(task: str, history: List[str], tickets: list) -> float:
 
     # Ensure score is strictly between 0 and 1
     score = round(score, 4)
-    if score <= 0.0:
+    # Additional safety check after rounding
+    if score <= 0.0001:  # Allow some margin for rounding
         score = 0.001
-    elif score >= 1.0:
-        score = 0.999
-    elif score == 0.0:
-        score = 0.001
-    elif score == 1.0:
+    elif score >= 0.9999:  # Allow some margin for rounding
         score = 0.999
 
     return score
