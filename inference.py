@@ -48,6 +48,7 @@ import os
 import sys
 import time
 import uuid
+from decimal import Decimal, ROUND_DOWN
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -134,9 +135,30 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
     )
 
 
+def _format_score_strict(score: float) -> str:
+    """
+    Format score so it never rounds to 1.0.
+    Validator requires score strictly in (0, 1).
+    """
+    # Clamp first (safety), then quantize by rounding DOWN (never up to 1.0000).
+    s = max(0.001, min(0.999, float(score)))
+    d = Decimal(str(s)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+    # Final safety clamp inside (0,1) even after quantize.
+    if d <= Decimal("0"):
+        d = Decimal("0.0010")
+    if d >= Decimal("1"):
+        d = Decimal("0.9990")
+    return f"{d:.4f}"
+
+
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+    # IMPORTANT: validator requires task score strictly in (0, 1).
+    # Avoid any rounding that could produce 1.0000.
+    print(
+        f"[END] success={str(success).lower()} steps={steps} score={_format_score_strict(score)} rewards={rewards_str}",
+        flush=True,
+    )
 
 
 def build_user_prompt(obs) -> str:

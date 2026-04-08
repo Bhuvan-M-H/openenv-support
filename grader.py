@@ -1,7 +1,7 @@
 """
 grader.py — Per-task scoring functions for the Support Ticket RL Environment.
 
-All functions return a float in (0.0, 1.0).
+All functions return a float in (0, 1).
 Called by both run_task.py (local validation) and inference.py (submission).
 """
 
@@ -18,7 +18,7 @@ def grade(task: str, history: List[str], tickets: list) -> float:
         tickets:  List of Ticket objects at end of episode
 
     Returns:
-        Float score in (0.0, 1.0)
+        Float score in (0, 1)
     """
     total = len(tickets)
     if total == 0:
@@ -95,12 +95,8 @@ def grade(task: str, history: List[str], tickets: list) -> float:
     else:
         raise ValueError(f"Unknown task: '{task}'. Must be one of: easy, medium, hard")
 
-    # Ensure score is strictly between 0 and 1
+# Ensure score is strictly between 0 and 1 (exclusive)
     score = round(score, 4)
-    # Ultra-conservative safety check after rounding
-    if score <= 0.002:  # Any value at or below 0.002
-        score = 0.001
-    elif score >= 0.997:  # Any value at or above 0.997
-        score = 0.997
+    score = max(0.001, min(0.999, score))
 
     return score
