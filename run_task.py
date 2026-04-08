@@ -50,6 +50,7 @@ def run_task(task_name: str, max_steps: int = 25, verbose: bool = True) -> float
             break
 
     final_score = grade(task_name, env.history, env.tickets)
+    final_score = max(0.001, min(0.999, final_score))  # strict clamp for safety
 
     if verbose:
         resolved = sum(1 for t in env.tickets if t.resolved)
@@ -82,12 +83,14 @@ def main():
     print("  SUMMARY")
     print(f"{'='*55}")
     for task_name, score in scores.items():
+        score = max(0.001, min(0.999, score))  # strict clamp for safety
         bar_len = int(score * 30)
         bar = "#" * bar_len + "." * (30 - bar_len)
         print(f"  {task_name:8s}  [{bar}]  {score:.4f}")
 
     if len(scores) > 1:
         overall = sum(scores.values()) / len(scores)
+        overall = max(0.001, min(0.999, overall))
         print(f"\n  OVERALL   {overall:.4f}")
 
     print()
@@ -95,3 +98,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
