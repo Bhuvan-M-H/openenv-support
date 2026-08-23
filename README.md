@@ -284,10 +284,10 @@ To improve shortlist competitiveness, we ran one focused shaping pass on scoring
 
 Notes:
 - Scores remain bounded in `(0.0, 1.0)`.
-- This shaping improves evaluation stability while keeping realistic trade-offs (SLA risk vs throughput vs efficiency).
+- This shaping improves evaluation stability while keeping realistic trade-offs (SLA risk vs throughput vs efficiency)...
 
 ---
 
 ## License
 
-BSD-3-Clause -- see LICENSE file.
+BSD-3-Clause -- see LICENSE file...
